@@ -2,8 +2,19 @@
 
 Production-grade serving of **GLM-5.2 (753B MoE)** quantized to **EXL3 Trellis 3.0 bpw** with a
 rank-sliced **EXL3 MTP-78 draft head**, on 4× NVIDIA RTX PRO 6000 Blackwell (SM120, 96 GB,
-PCIe — no NVLink). TP4 / DCP4, `nvfp4_ds_mla` 4-bit KV cache, MTP-3 speculative decoding,
-524,288-token context.
+PCIe — no NVLink). TP4 / DCP4, `nvfp4_ds_mla` 4-bit KV cache, MTP-3 speculative decoding.
+
+**Context geometry** (three different numbers — don't conflate them):
+- **Model-native window: 1,048,576 tokens** (visible at boot: `Overriding draft model max model
+  len from 1048576 to 524288`).
+- **Shipped per-request cap: 524,288** (`--max-model-len`) — a deliberate choice so the KV pool
+  holds ~2 full-length requests concurrently. Raise it toward 1M only if single-stream is
+  acceptable: the pool itself is the binding limit.
+- **Measured KV pool (`nvfp4_ds_mla`, util 0.96, tr3 MTP-78 head): 959,744–1,132,544 tokens**
+  across boots (1.83×–2.16× concurrency at 524,288). The exact figure depends on what else is
+  resident on the GPUs when vLLM profiles; read yours from the boot line
+  `GPU KV cache size: N tokens`. The tr3 draft head is what buys this pool — roughly +66% KV
+  versus the BF16 head.
 
 Everything here is **reproducibly pinned**: the runtime image by registry digest, its base by
 digest, and the EXL3 source layer by the two upstream PRs it is built from.
@@ -55,7 +66,7 @@ Headlines, all measured on this exact image/digest on 4× RTX PRO 6000 (power-ca
 | Tool calling — streaming deltas (`glm47` parser) | **PASS**, no content leakage |
 | Fused Trellis MoE at m=1,2,3 (NaN-poisoned arena, production tile geometry) | **bitwise-correct**, 0 FAIL / 27 |
 | CUDA-graph capture + replay below plan capacity (m ∈ {1,2,3} vs cap 32) | **bit-for-bit vs eager**, stable across replays |
-| KV pool at `util 0.96` (tr3 MTP-78 head) | ≈ **0.96–1.13 M tokens** (auto-profile; depends on co-resident GPU load) |
+| KV pool at `util 0.96` (tr3 MTP-78 head) | **959,744 / 998,400 / 1,132,544 tokens** measured across boots (busy → clear → idle GPUs); 1.83×–2.16× at 524,288 |
 
 Independent evaluation: [`docs/independent-eval/ORIGINAL_REPORT.md`](docs/independent-eval/ORIGINAL_REPORT.md).
 Benchmark session logs: [`docs/benchmarks/`](docs/benchmarks/).
@@ -91,8 +102,8 @@ Measured on this checkpoint (same image family, 300 W caps):
 | | DCP4 (default) | DCP1 |
 |---|---|---|
 | Prefill 8k / 64k / 128k (tok/s) | ~1.45k / 1.23k / 1.17k | **2.60k / 2.42k / 2.30k** |
-| KV pool | **~1.0 M tokens** | ~294 k tokens |
-| Max context servable | 524,288 | ~262 k practical |
+| KV pool (measured) | **959,744–1,132,544 tokens** | 293,760 tokens |
+| Per-request cap | 524,288 shipped (model native 1,048,576) | ~262 k practical (vLLM's own DCP1 estimate: 294,976 ceiling) |
 
 DCP shards the KV cache across ranks (capacity) at the cost of prefill collectives (speed).
 Agent-style workloads dominated by prefill may prefer `deploy/docker-compose-dcp1.yml`; note the
