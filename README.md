@@ -76,7 +76,7 @@ Benchmark session logs: [`docs/benchmarks/`](docs/benchmarks/).
 ```
 deploy/                  ready-to-run serving
   docker-compose.yml       TP4/DCP4 production config (digest-pinned image)
-  docker-compose-dcp1.yml  DCP1 variant: ~2× prefill throughput, ~3.4× smaller KV pool
+  docker-compose-dcp1.yml  DCP1 variant: faster prefill (+~40% at 64–128k), ~3.4× smaller KV pool
   server.sh                convenience launcher (env-overridable)
 build/                   how the image is made
   Dockerfile               thin overlay on the pinned GG/SparkInfer v20 base
@@ -99,16 +99,19 @@ docs/                    published results
 
 Measured on this checkpoint (same image family, 300 W caps):
 
-| | DCP4 (default) | DCP1 |
+| | DCP4 (default, measured on v29) | DCP1 (measured on v26) |
 |---|---|---|
-| Prefill 8k / 64k / 128k (tok/s) | ~1.45k / 1.23k / 1.17k | **2.60k / 2.42k / 2.30k** |
+| Prefill 8k / 64k / 128k (tok/s) | 2,341 / 1,755 / 1,657 | **2,597 / 2,421 / 2,304** |
 | KV pool (measured) | **959,744–1,132,544 tokens** | 293,760 tokens |
 | Per-request cap | 524,288 shipped (model native 1,048,576) | ~262 k practical (vLLM's own DCP1 estimate: 294,976 ceiling) |
 
 DCP shards the KV cache across ranks (capacity) at the cost of prefill collectives (speed).
-Agent-style workloads dominated by prefill may prefer `deploy/docker-compose-dcp1.yml`; note the
-DCP4 prefill column predates the current base's DCP prefill auto-policy work, so treat the gap as
-indicative, not a controlled single-variable measurement.
+With the v20-final DCP prefill auto-policy in the base, DCP4's long-context prefill gap versus
+DCP1 has narrowed to roughly +11% (8k) / +38–39% (64–128k) in DCP1's favor — no longer the ~2×
+seen on older bases. The two columns are one image generation apart (v29 vs v26), so treat the
+residual gap as indicative. Prefill-dominated workloads that fit in ~260k context may still
+prefer `deploy/docker-compose-dcp1.yml`; everyone else should stay on DCP4 for the ~3.4× KV
+pool. Full session data: `docs/benchmarks/2026-07-27-v29-decode-prefill.md`.
 
 ## Building the image yourself
 
