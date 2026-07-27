@@ -21,8 +21,8 @@ digest, and the EXL3 source layer by the two upstream PRs it is built from.
 
 | Artifact | Pin |
 |---|---|
-| Runtime image | `verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a` |
-| Image digest | `sha256:2996b8ac37ff126a8aeebaa24df72e2154a2a1573df41f99eb48a4275e33eb41` |
+| Runtime image | `verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a` |
+| Image digest | `sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93` |
 | Common base (GG/SparkInfer v20) | `voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20260726` @ `sha256:10261c7d65101c8aba2ce1fb59eabe73aff9d35eca5043b330cc0ce76d3c98d0` |
 | Model weights | [brandonmusic/GLM-5.2-EXL3-TR3-3.0bpw](https://huggingface.co/brandonmusic/GLM-5.2-EXL3-TR3-3.0bpw) (includes the tr3 MTP layer-78 head) |
 | EXL3 vLLM backend | [local-inference-lab/vllm #139](https://github.com/local-inference-lab/vllm/pull/139) |
@@ -80,7 +80,7 @@ deploy/                  ready-to-run serving
   server.sh                convenience launcher (env-overridable)
 build/                   how the image is made
   Dockerfile               thin overlay on the pinned GG/SparkInfer v20 base
-  overlay/                 12 vLLM runtime files = base files + EXL3 edits (source: PR #139)
+  overlay/                 13 vLLM runtime files = base files + EXL3 edits (source: PR #139)
   glm52_nvfp4_mla_outer_scales.json  calibrated MLA outer scales for the nvfp4 KV cache
   extract_assets.sh        recover prebuilt binaries (exllamav3 ext, ABI shim, wheel)
                            from the published image — keeps this repo source-only
@@ -155,9 +155,11 @@ signature it exists to catch. Run it against any config change before trusting t
 - SM120 has no TMEM/TCGEN05/WGMMA: sparse-MLA kernel families that require them (FlashMLA-sparse
   etc.) are unavailable; this stack's `B12X_MLA_SPARSE` backend + `nvfp4_ds_mla`/`fp8`/`bf16` KV
   is the working path.
-- Startup logs may still warn `Unknown vLLM environment variable` for a handful of base-runtime
-  knobs; these are cosmetic (the consuming code reads the environment directly). The EXL3-owned
-  ones are registered as of PR #139 commit `00787eea`.
+- Startup logs still warn `Unknown vLLM environment variable` for 8 base-runtime knobs;
+  cosmetic (the consuming code reads the environment directly). The nine EXL3-owned knobs are
+  registered in-image as of v30 (PR #139 commit `00787eea`), dropping the warning count 15 → 8.
+  Side effect: those knobs are torch.compile cache-key factors — changing one costs a one-time
+  ~70 s recompile on next boot.
 - fp8 KV works on SM120 in this stack (18/18 needle above) — ignore older notes claiming
   otherwise; nvfp4 remains the default for the ~2× larger pool at equal quality
   (KLD delta ≈ 0.015, see the test suite).

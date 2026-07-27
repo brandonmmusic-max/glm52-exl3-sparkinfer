@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-export IMAGE="${IMAGE:-verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a@sha256:2996b8ac37ff126a8aeebaa24df72e2154a2a1573df41f99eb48a4275e33eb41}"
+export IMAGE="${IMAGE:-verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a@sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93}"
 export MODEL_DIR="${MODEL_DIR:-$SCRIPT_DIR}"
 export CACHE_DIR="${CACHE_DIR:-$HOME/.cache/glm52-exl3-sparkinfer}"
 export PORT="${PORT:-8000}"

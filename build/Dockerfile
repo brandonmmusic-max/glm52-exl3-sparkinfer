@@ -13,8 +13,8 @@ FROM voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20
 LABEL org.opencontainers.image.title="GLM-5.2 EXL3 Trellis (Gilded Gnosis v20 final base)" \
       org.opencontainers.image.description="v20 finalized common runtime (vLLM 0c79e41 + SparkInfer e603f74) + EXL3 Trellis MoE overlay, rebased PRs #139/#49, MTP-78 tr3 draft head, per-model rank-sliced runtime scoping (target/draft scratch isolation), per-ordinal architecture cache key" \
       ai.verdict.base="voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20260726" \
-      ai.verdict.vllm.exl3="rebased-#139-on-0c79e41 + MIN_CAPTURABLE_TRELLIS_M (boots without the MIN_M=1 workaround) + role-aware owner token + batch-invariant arena key" \
-      ai.verdict.sparkinfer.exl3="rebased-#49-on-e603f74 + per-ordinal arch cache key + device-validation fixes" \
+      ai.verdict.vllm.exl3="rebased-#139-on-0c79e41 + MIN_CAPTURABLE stamp + owner token + batch-invariant arena key + EXL3 env knobs registered in envs.py (startup warnings 15->8)" \
+      ai.verdict.sparkinfer.exl3="rebased-#49-on-master+PR79 (pcie dcp top-k owner exchange module included, dormant pending vLLM-side) + per-ordinal arch cache key" \
       ai.verdict.model="brandonmusic/GLM-5.2-EXL3-TR3-3.0bpw"
 
 # 1. Rebased SparkInfer EXL3-Trellis wheel (superset of the base's canonical be0edca).
@@ -22,7 +22,7 @@ COPY dist/sparkinfer-1.0.1-py3-none-any.whl /tmp/sparkinfer-1.0.1-py3-none-any.w
 RUN /opt/venv/bin/pip install --no-deps --force-reinstall /tmp/sparkinfer-1.0.1-py3-none-any.whl \
     && rm /tmp/sparkinfer-1.0.1-py3-none-any.whl
 
-# 2. EXL3 vLLM overlay (12 runtime files) over the canonical v20 vLLM tree.
+# 2. EXL3 vLLM overlay (13 runtime files) over the canonical v20 vLLM tree.
 #    Each file is the v20-final version with the EXL3 edits replayed on top, so
 #    v20's DCP/prefill/indexer work is preserved (deepseek_v2.py and indexer.py
 #    are the only two the new base changed; both were re-derived, not overwritten).
@@ -40,7 +40,8 @@ RUN /opt/venv/bin/python3 -m py_compile \
         /opt/venv/lib/python3.12/site-packages/vllm/models/deepseek_v32/nvidia/attention.py \
         /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/mla/indexer.py \
         /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py \
-        /opt/venv/lib/python3.12/site-packages/vllm/v1/structured_output/__init__.py
+        /opt/venv/lib/python3.12/site-packages/vllm/v1/structured_output/__init__.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/envs.py
 
 # 3. EXL3 runtime assets (base has no EXL3; NCCL 2.30.4 already in base).
 RUN install -d /opt/glm52/lib /opt/glm52/kv-scale

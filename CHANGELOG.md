@@ -26,3 +26,13 @@
   (draft quant-config hydration, rank-slice name normalization) — see vllm #139.
 - v22–v26: KLD fixes, DCP prefill auto-policy, scope fix, arch-key work. See
   docs/RELEASE_TEST_SUITE.md for per-version validation.
+
+## v30 — 2026-07-27 (`sha256:f13f2f3854d4…`)
+- **EXL3 env knobs registered in `envs.py`** (PR #139 `00787eea`): startup unknown-var warnings
+  drop 15 → 8; knobs become compile-cache factors (one-time recompile if changed).
+- **SparkInfer wheel rebuilt post-PR#79** ("perf(pcie): add exact DCP top-k owner exchange",
+  merged upstream): the CUDA-IPC owner-exchange module ships in the wheel. Dormant in this
+  image — #79 has zero overlap with the EXL3/MoE lane and the vLLM-side owner algorithm is not
+  in the pinned base yet; included so the wheel stays a strict superset of upstream master.
+- Gates on the pinned digest: boot with `VLLM_EXL3_TRELLIS_MIN_M` unset PASS, warnings 15→8,
+  0 capture errors, inference PASS, tool calls 4/4.
