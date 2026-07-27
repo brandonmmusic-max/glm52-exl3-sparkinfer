@@ -1,5 +1,5 @@
 # GLM-5.2 EXL3 Trellis on the FINALIZED Gilded Gnosis v20 common base (2026-07-25).
-# Base = canonical vLLM 0c79e41 + SparkInfer e603f74 + FlashInfer 801d57a,
+# Base = canonical vLLM 0c79e41 + SparkInfer c3828fd + FlashInfer 801d57a,
 #        CUTLASS DSL 4.6.0, CUDA 13.2, PyTorch 2.12, NCCL 2.30.4,
 #        InstantTensor BUFFERED, DCP prefill auto-policy + workspace accounting,
 #        long-context MTP alignment, deterministic dynamic-MoE output.
@@ -8,13 +8,13 @@
 # Per the v20 release note, EXL3 is enabled by rebasing the EXL3 *source layer*
 # onto this pinned base -- NOT by pointing the base tag at an EXL3 checkpoint
 # (the base packages no EXL3/Trellis loader or kernels).
-FROM voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20260726
+FROM voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sic3828fd-fi801d57a-cu132-20260727
 
 LABEL org.opencontainers.image.title="GLM-5.2 EXL3 Trellis (Gilded Gnosis v20 final base)" \
       org.opencontainers.image.description="v20 finalized common runtime (vLLM 0c79e41 + SparkInfer e603f74) + EXL3 Trellis MoE overlay, rebased PRs #139/#49, MTP-78 tr3 draft head, per-model rank-sliced runtime scoping (target/draft scratch isolation), per-ordinal architecture cache key" \
-      ai.verdict.base="voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20260726" \
+      ai.verdict.base="voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sic3828fd-fi801d57a-cu132-20260727" \
       ai.verdict.vllm.exl3="rebased-#139-on-0c79e41 + MIN_CAPTURABLE stamp + owner token + batch-invariant arena key + EXL3 env knobs registered in envs.py (startup warnings 15->8)" \
-      ai.verdict.sparkinfer.exl3="rebased-#49-on-master+PR79 (pcie dcp top-k owner exchange module included, dormant pending vLLM-side) + per-ordinal arch cache key" \
+      ai.verdict.sparkinfer.exl3="#49 (11 commits) on integration pin c3828fd — wheel verified superset of base (168/168 source files)" \
       ai.verdict.model="brandonmusic/GLM-5.2-EXL3-TR3-3.0bpw"
 
 # 1. Rebased SparkInfer EXL3-Trellis wheel (superset of the base's canonical be0edca).

@@ -21,9 +21,9 @@ digest, and the EXL3 source layer by the two upstream PRs it is built from.
 
 | Artifact | Pin |
 |---|---|
-| Runtime image | `verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a` |
-| Image digest | `sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93` |
-| Common base (GG/SparkInfer v20) | `voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20260726` @ `sha256:10261c7d65101c8aba2ce1fb59eabe73aff9d35eca5043b330cc0ce76d3c98d0` |
+| Runtime image | `verdictai/glm52-exl3-sparkinfer:v31-gg-v20-sic3828fd-vllm0c79e41-cu132-sm120a` |
+| Image digest | `sha256:0433ae94665b769b78dd301f952d907508a3ba80bce47a1630ec20ade8812dff` |
+| Common base (GG/SparkInfer v20) | `voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sic3828fd-fi801d57a-cu132-20260727` @ `sha256:131481b0f12c455a8fbad72c5909eb3a2c3accd96815743fdcfa134396e548c0` |
 | Model weights | [brandonmusic/GLM-5.2-EXL3-TR3-3.0bpw](https://huggingface.co/brandonmusic/GLM-5.2-EXL3-TR3-3.0bpw) (includes the tr3 MTP layer-78 head) |
 | EXL3 vLLM backend | [local-inference-lab/vllm #139](https://github.com/local-inference-lab/vllm/pull/139) |
 | EXL3 fused-MoE kernels | [local-inference-lab/sparkinfer #49](https://github.com/local-inference-lab/sparkinfer/pull/49) |

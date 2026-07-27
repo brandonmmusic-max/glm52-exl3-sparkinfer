@@ -1,6 +1,6 @@
 services:
   glm52:
-    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a@sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93}
+    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v31-gg-v20-sic3828fd-vllm0c79e41-cu132-sm120a@sha256:0433ae94665b769b78dd301f952d907508a3ba80bce47a1630ec20ade8812dff}
     container_name: glm52-exl3-sparkinfer
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8000}:8000"

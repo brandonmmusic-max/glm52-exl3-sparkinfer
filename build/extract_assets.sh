@@ -5,7 +5,7 @@
 #   - torch-2.12 ABI compatibility shim
 #   - rebased SparkInfer wheel (also buildable from sparkinfer PR #49: pip wheel --no-deps .)
 set -euo pipefail
-IMG="${IMG:-verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a@sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93}"
+IMG="${IMG:-verdictai/glm52-exl3-sparkinfer:v31-gg-v20-sic3828fd-vllm0c79e41-cu132-sm120a@sha256:0433ae94665b769b78dd301f952d907508a3ba80bce47a1630ec20ade8812dff}"
 cd "$(dirname "$0")"
 mkdir -p dist
 cid=$(docker create "$IMG")

@@ -6,7 +6,7 @@
 # MLA speed levers rather than just DCP plumbing.
 services:
   glm52:
-    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a}
+    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v31-gg-v20-sic3828fd-vllm0c79e41-cu132-sm120a}
     container_name: glm52-exl3-sparkinfer
     restart: unless-stopped
     ports:

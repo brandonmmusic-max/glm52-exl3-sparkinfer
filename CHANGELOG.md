@@ -36,3 +36,16 @@
   in the pinned base yet; included so the wheel stays a strict superset of upstream master.
 - Gates on the pinned digest: boot with `VLLM_EXL3_TRELLIS_MIN_M` unset PASS, warnings 15→8,
   0 capture errors, inference PASS, tool calls 4/4.
+
+## v31 — 2026-07-27 (`sha256:0433ae9466…`)
+- **Base refresh** to the unified v20 image (`sic3828fd`, digest-verified against the release
+  checklist). vLLM pin unchanged → the 13-file overlay is byte-identical to v30.
+- **Wheel rebuilt on the integration pin** (`#49` × 11 commits on `c3828fd`) and
+  **superset-verified**: all 168 canonical SparkInfer source files present before the wheel
+  overwrites the base install. This check is now part of the build procedure.
+- **v30 correction:** v30's wheel was built from SparkInfer *master* rather than the base's
+  integration pin, so it dropped the integration-only PCIe calibration commits from the
+  installed tree. No effect on these configs (explicit DCP pins; calibration engages only on
+  `auto`) — helper/auto users should move to v31.
+- Gates on the pinned digest: MIN_M-unset boot PASS, warnings 8, 0 capture errors,
+  inference PASS, tools 4/4.
