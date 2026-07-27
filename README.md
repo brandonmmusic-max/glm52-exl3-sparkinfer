@@ -111,7 +111,10 @@ DCP1 has narrowed to roughly +11% (8k) / +38–39% (64–128k) in DCP1's favor �
 seen on older bases. The two columns are one image generation apart (v29 vs v26), so treat the
 residual gap as indicative. Prefill-dominated workloads that fit in ~260k context may still
 prefer `deploy/docker-compose-dcp1.yml`; everyone else should stay on DCP4 for the ~3.4× KV
-pool. Full session data: `docs/benchmarks/2026-07-27-v29-decode-prefill.md`.
+pool. Full session data: [`docs/benchmarks/2026-07-27-v29-decode-prefill.md`](docs/benchmarks/2026-07-27-v29-decode-prefill.md)
+(raw [decode log](docs/benchmarks/2026-07-27/decode-c1-c32-ctx0-32k.log) /
+[prefill log](docs/benchmarks/2026-07-27/prefill-v29-dcp4.log) + JSON in
+[`docs/benchmarks/2026-07-27/`](docs/benchmarks/2026-07-27/)).
 
 ## Building the image yourself
 

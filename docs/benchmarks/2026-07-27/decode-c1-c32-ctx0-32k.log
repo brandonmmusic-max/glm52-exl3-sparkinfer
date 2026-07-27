@@ -1,0 +1,152 @@
+╭──────────────────────────── NVIDIA P2P Override ─────────────────────────────╮
+│ Effective: yes                                                               │
+│ Configured file: yes (/etc/modprobe.d/nvidia-p2p-override.conf)              │
+│ Runtime: ForceP2P=0x11; RMForceP2PType=1; RMPcieP2PType=2;                   │
+│ GrdmaPciTopoCheckOverride=1; EnableResizableBar=1; DmaRemapPeerMmio=1        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────── Configuration ────────────────────────────────╮
+│ LLM Inference Benchmark                                                      │
+│ Model: GLM-5.2-EXL3-TR3-3.0bpw @ localhost:9200                              │
+│ Decode concurrency: [1, 2, 4, 8, 16, 32]                                     │
+│ Decode contexts: ['0', '8k', '16k', '32k']                                   │
+│ Duration: 20.0s per decode test | Max tokens: 8192                           │
+│ Pre-decode warmup: C=1 max-runnable context for 3s                           │
+│ Prefill: skipped | Sustained decode: 24 cells                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Engine: vLLM 
+0.11.2.dev280+gilded.gnosis.v20.vllm0c79e41.sie603f74.fi801d57a.cu132.20260726  
+Models: ['GLM-5.2-EXL3-TR3-3.0bpw', 'qwen3.5-397b-nvfp4']
+vLLM Prometheus reports only local KV cache (239,936 tokens), but DCP/CP 
+multiplier is not exported by this server. Pass --dcp-size N or --kv-budget to 
+enable exact KV capacity skips for remote vLLM. Leaving KV budget unset instead 
+of assuming DCP=1.
+vLLM: KV cache budget not available from metrics. Use --kv-budget to skip 
+over-capacity cells, or rely on queue detection.
+Model context length: 524,288 tokens
+Prefill tests: skipped
+Calibrating padding text (run=byridsmkkrzz, up to 32k)...
+  Token targeting: single-point estimate from 8k (use --token-targeting exact 
+for /tokenize binary search)
+  Calibrated: 6.18 chars/token (from 8k probe)
+  8k: 50,601 chars (~8,191 tokens)
+  16k: 101,202 chars (~16,383 tokens)
+  32k: 202,404 chars (~32,767 tokens)
+Done.
+
+
+
+llm-decode-bench v0.4.29
+╭────────────────────────────────── Phase 2 ───────────────────────────────────╮
+│ Sustained Decode                                                             │
+│ Steady-state decode throughput after the engine has admitted the requested   │
+│ concurrency and passed warmup. Use this as the main tuning/regression signal │
+│ for kernels, NCCL, DCP, MTP, and scheduler changes.                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Aggregate tok/s  + TTFT/ITL                                               
+╭────────────┬────────┬────────┬────────┬────────┬───────────┬───────────╮
+│ ctx \ conc │      1 │      2 │      4 │      8 │        16 │        32 │
+├────────────┼────────┼────────┼────────┼────────┼───────────┼───────────┤
+│ 0          │   82.9 │  140.0 │  212.0 │  302.5 │ ∅ (8/16)* │ ∅ (8/32)* │
+│            │ 214/12 │ 300/14 │ 426/18 │ 585/26 │    599/29 │    596/30 │
+│ 8k         │   78.7 │  134.8 │  198.5 │  288.2 │ ∅ (8/16)* │ ∅ (8/32)* │
+│            │ 286/13 │ 483/15 │ 956/20 │  2k/27 │     2k/29 │     2k/30 │
+│ 16k        │   80.3 │  130.0 │  199.2 │  272.4 │ ∅ (8/16)* │ ∅ (8/32)* │
+│            │ 357/12 │ 589/15 │  1k/20 │  2k/29 │     2k/30 │     2k/29 │
+│ 32k        │   77.4 │  136.9 │  205.3 │  292.5 │ ∅ (8/16)* │ ∅ (8/32)* │
+│            │ 381/13 │ 625/15 │  1k/19 │  2k/27 │     2k/30 │     2k/30 │
+╰────────────┴────────┴────────┴────────┴────────┴───────────┴───────────╯
+Sustained Decode: aggregate tok/s uses OpenAI stream usage by default 
+(continuous completion_tokens when the server supports it). Prometheus is kept 
+as validation/scheduler data.
+Aggregate source(s): openai_continuous_usage
+∅ = skipped/hidden because the cell does not fit in KV cache; exact deficit is 
+kept in JSON timeout_reason
+(X/Y) = avg running / requested concurrency from Prometheus; * = 
+capacity-limited or warmup timed out
+Per-Request tok/s                                                 
+╭────────────┬──────┬──────┬──────┬──────┬───────────┬───────────╮
+│ ctx \ conc │    1 │    2 │    4 │    8 │        16 │        32 │
+├────────────┼──────┼──────┼──────┼──────┼───────────┼───────────┤
+│ 0          │ 82.9 │ 70.0 │ 53.0 │ 37.8 │ ∅ (8/16)* │ ∅ (8/32)* │
+│ 8k         │ 78.7 │ 67.4 │ 49.6 │ 36.0 │ ∅ (8/16)* │ ∅ (8/32)* │
+│ 16k        │ 80.3 │ 65.0 │ 49.8 │ 34.1 │ ∅ (8/16)* │ ∅ (8/32)* │
+│ 32k        │ 77.4 │ 68.5 │ 51.3 │ 36.6 │ ∅ (8/16)* │ ∅ (8/32)* │
+╰────────────┴──────┴──────┴──────┴──────┴───────────┴───────────╯
+Client request latency: p50 / p90 ms              
+╭────────────┬─────┬─────┬─────┬─────┬─────┬─────╮
+│ ctx \ conc │   1 │   2 │   4 │   8 │  16 │  32 │
+├────────────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│ 0          │ —/— │ —/— │ —/— │ —/— │ —/— │ —/— │
+│ 8k         │ —/— │ —/— │ —/— │ —/— │ —/— │ —/— │
+│ 16k        │ —/— │ —/— │ —/— │ —/— │ —/— │ —/— │
+│ 32k        │ —/— │ —/— │ —/— │ —/— │ —/— │ —/— │
+╰────────────┴─────┴─────┴─────┴─────┴─────┴─────╯
+Aggregate cells show dim detail as TTFT ms / ITL ms for the same ctx/conc 
+coordinate. ITL is computed from observed generated tokens, including streams 
+stopped at the measurement boundary; a missing ITL means no stream produced at 
+least two measured output tokens. Per-request tok/s and request latency are 
+shown in separate per-cell matrices. Completion/sample counts and full 
+request-level distributions remain in JSON under request_samples.
+Sustained mode: client latency metrics explain request UX variance; aggregate 
+tok/s remains the primary throughput signal. 
+ITL=(last_token_time-first_token_time)/(output_tokens-1), user tok/s=1/ITL.
+Hardware Summary                                                                
+╭───┬──┬───────┬───────────┬───────┬─────────┬─────┬─────┬─────┬───────────────╮
+│ … │  │ mode  │ GPU avg/… │ Mem … │ W avg/… │ T … │ CP… │ VR… │ PCIe rx/tx a… │
+├───┼──┼───────┼───────────┼───────┼─────────┼─────┼─────┼─────┼───────────────┤
+│ 0 │  │ sust… │  100/100% │   43% │ 982/995 │ 65C │ 72C │ 97… │   10488/10401 │
+│ … │  │ sust… │  100/100% │   40% │ 986/993 │ 73C │ 73C │ 97… │     9885/9920 │
+│ … │  │ sust… │  100/100% │   40% │ 1014/1… │ 80C │ 76C │ 98… │     9937/9870 │
+│ … │  │ sust… │  100/100% │   40% │ 1037/1… │ 86C │ 77C │ 98… │     9813/9769 │
+│ 0 │  │ sust… │  100/100% │   44% │ 1091/1… │ 90C │ 75C │ 98… │   17099/16831 │
+│ 0 │  │ sust… │  100/100% │   44% │ 1116/1… │ 91C │ 75C │ 98… │   23471/23297 │
+│ 0 │  │ sust… │   99/100% │   42% │ 1129/1… │ 91C │ 75C │ 98… │   32703/32272 │
+│ 0 │  │ sust… │  100/100% │   40% │ 1124/1… │ 91C │ 75C │ 98… │   28788/28932 │
+│ 0 │  │ sust… │  100/100% │   40% │ 1120/1… │ 91C │ 76C │ 98… │   33814/33602 │
+│ … │  │ sust… │  100/100% │   41% │ 1082/1… │ 89C │ 76C │ 98… │   15988/16059 │
+│ … │  │ sust… │  100/100% │   40% │ 1101/1… │ 89C │ 76C │ 98… │   21765/21577 │
+│ … │  │ sust… │  100/100% │   39% │ 1111/1… │ 90C │ 76C │ 98… │   30913/30783 │
+│ … │  │ sust… │   98/100% │   37% │ 1113/1… │ 92C │ 79C │ 98… │   34046/34082 │
+│ … │  │ sust… │  100/100% │   36% │ 1108/1… │ 92C │ 80C │ 98… │   36666/35956 │
+│ … │  │ sust… │  100/100% │   41% │ 1082/1… │ 90C │ 77C │ 98… │   15864/15825 │
+│ … │  │ sust… │  100/100% │   40% │ 1099/1… │ 90C │ 77C │ 98… │   21654/21463 │
+│ … │  │ sust… │  100/100% │   38% │ 1110/1… │ 90C │ 77C │ 98… │   29953/29929 │
+│ … │  │ sust… │  100/100% │   39% │ 1115/1… │ 92C │ 78C │ 98… │   28673/28623 │
+│ … │  │ sust… │  100/100% │   37% │ 1110/1… │ 92C │ 83C │ 98… │   37406/36434 │
+│ … │  │ sust… │  100/100% │   43% │ 1099/1… │ 90C │ 78C │ 98… │   16691/15909 │
+│ … │  │ sust… │  100/100% │   41% │ 1115/1… │ 91C │ 78C │ 98… │   22449/22276 │
+│ … │  │ sust… │  100/100% │   39% │ 1122/1… │ 92C │ 78C │ 98… │   31331/31749 │
+│ … │  │ sust… │  100/100% │   39% │ 1108/1… │ 92C │ 81C │ 98… │   33654/33077 │
+│ … │  │ sust… │  100/100% │   37% │ 1104/1… │ 92C │ 83C │ 98… │   36369/33797 │
+╰───┴──┴───────┴───────────┴───────┴─────────┴─────┴─────┴─────┴───────────────╯
+╭───────────────────────── Whole-run GPU Power ──────────────────────────╮
+│ avg 1,072 W | max 1,139 W | limit 1,200 W | over 19m 32s | 485 samples │
+╰────────────────────────────────────────────────────────────────────────╯
+Hardware summary is sampled from nvidia-smi during the measured part of each 
+cell. Whole-run GPU power is the sampled sum of GPU power draw across the 
+complete benchmark run, not wall-outlet system power. PCIe rx/tx is MB/s and is 
+a coarse live diagnostic, not a per-kernel NCCL profiler.
+
+╭────────────────────────────────── Phase 3 ───────────────────────────────────╮
+│ Burst / E2E Decode                                                           │
+│ Not run. Re-run with --run-burst to append a finite client-facing request    │
+│ burst after Sustained Decode. This is intentionally disabled by default      │
+│ because it adds another full decode matrix.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── Primary Summary ───────────────────────────────╮
+│ Primary matrices repeated last so the important numbers are visible without  │
+│ scrolling back through diagnostics.                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Aggregate decode tok/s                                               
+╭────────────┬──────┬───────┬───────┬───────┬───────────┬───────────╮
+│ ctx \ conc │    1 │     2 │     4 │     8 │        16 │        32 │
+├────────────┼──────┼───────┼───────┼───────┼───────────┼───────────┤
+│ 0          │ 82.9 │ 140.0 │ 212.0 │ 302.5 │ ∅ (8/16)* │ ∅ (8/32)* │
+│ 8k         │ 78.7 │ 134.8 │ 198.5 │ 288.2 │ ∅ (8/16)* │ ∅ (8/32)* │
+│ 16k        │ 80.3 │ 130.0 │ 199.2 │ 272.4 │ ∅ (8/16)* │ ∅ (8/32)* │
+│ 32k        │ 77.4 │ 136.9 │ 205.3 │ 292.5 │ ∅ (8/16)* │ ∅ (8/32)* │
+╰────────────┴──────┴───────┴───────┴───────┴───────────┴───────────╯
+
+Results saved to 
+results/20260727T123231Z-c32-32k-decode/decode-c1-c32-ctx0-32k.json

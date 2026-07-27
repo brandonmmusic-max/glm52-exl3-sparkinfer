@@ -26,5 +26,9 @@ image). 4× RTX PRO 6000 Blackwell, 300 W caps, TP4/DCP4, `nvfp4_ds_mla` KV, MTP
 | 64K  | 1,755 | 36.8 s |
 | 128K | 1,657 | 77.8 s |
 
-Raw JSON: `results/20260727T123231Z-c32-32k-decode/` and `…-v29-dcp4-prefill/` in the
-benchmarking rig's archive; harness = `llm_decode_bench.py` (sha in the release suite).
+Raw artifacts (in this repo, `docs/benchmarks/2026-07-27/`):
+[decode log](2026-07-27/decode-c1-c32-ctx0-32k.log) ·
+[decode json](2026-07-27/decode-c1-c32-ctx0-32k.json) ·
+[prefill log](2026-07-27/prefill-v29-dcp4.log) ·
+[prefill json](2026-07-27/prefill-v29-dcp4.json).
+Harness = `llm_decode_bench.py` (sha in the release suite).
