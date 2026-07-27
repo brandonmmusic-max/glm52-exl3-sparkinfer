@@ -27,7 +27,7 @@ defeats the target/draft isolation their independently captured CUDA graphs rely
 exactly one runtime. This is deliberately coarser than per-layer: the prefill arena is
 ~1054 MiB, so per-layer runtimes would need tens of GiB per rank across 75+ layers.
 
-**Runtime:** `verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a` (`sha256:8753406f…`).
+**Runtime:** `verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a` (`sha256:8753406f…`).
 
 **Measured effect (the fix is observable in memory, not in the log -- the planner line
 uses `info_once` and is deduplicated):**
@@ -74,7 +74,7 @@ The runtime is rebased onto the **finalized v20 common base**
 `voipmonitor/vllm:gilded-gnosis-v20-vllm0c79e41-sie603f74-fi801d57a-cu132-20260726`
 (vLLM `5517197`, Sparkinfer `be0edca`, FlashInfer `801d57a`, CUTLASS 4.6.0).
 
-**New runtime:** `verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a`
+**New runtime:** `verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a`
 (`sha256:da185fe8…`).
 
 **Why:** the finalized base consolidates the DCP prefill **auto-policy** and the
@@ -123,7 +123,7 @@ This checkpoint now ships the **MTP (layer 78) routed experts in EXL3 Trellis tr
 layer-78 file drops from 19.9 GB to 4.24 GB (−15.66 GB), freeing ~3.9 GiB/rank.
 
 **Requires the updated runtime:**
-`verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a`
+`verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a`
 (`sha256:9b1befc1…`) **plus `VLLM_EXL3_TRELLIS_MIN_M=1`** (the compose / server.sh
 default in this repo). The prior v20 image cannot load a tr3 MTP layer. The two
 loader fixes are in vLLM PR #139 (local-inference-lab/vllm#139); no Sparkinfer
@@ -162,7 +162,7 @@ BF16 weights alone would need 16x 96 GB cards. This fits on 4 with room for the 
 ## Image
 
 ```text
-verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a@sha256:2996b8ac37ff126a8aeebaa24df72e2154a2a1573df41f99eb48a4275e33eb41
+verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a@sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93
 ```
 
 This is the current runtime. The per-benchmark sections further down were
@@ -1600,7 +1600,7 @@ chmod +x server.sh && ./server.sh start
 ```yaml
 services:
   glm52:
-    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a@sha256:2996b8ac37ff126a8aeebaa24df72e2154a2a1573df41f99eb48a4275e33eb41}
+    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a@sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93}
     container_name: glm52-exl3-sparkinfer
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8000}:8000"
@@ -1754,7 +1754,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-export IMAGE="${IMAGE:-verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a@sha256:2996b8ac37ff126a8aeebaa24df72e2154a2a1573df41f99eb48a4275e33eb41}"
+export IMAGE="${IMAGE:-verdictai/glm52-exl3-sparkinfer:v30-gg-v20-envreg-pcietopk-vllm0c79e41-sie603f74-cu132-sm120a@sha256:f13f2f3854d40f56edc106071b6305f83c70389427cc527f42a6e99837e72d93}"
 export MODEL_DIR="${MODEL_DIR:-$SCRIPT_DIR}"
 export CACHE_DIR="${CACHE_DIR:-$HOME/.cache/glm52-exl3-sparkinfer}"
 export PORT="${PORT:-8000}"
@@ -1952,3 +1952,17 @@ with `VLLM_EXL3_TRELLIS_MIN_M` entirely unset:
 
 The compose files in this repo now leave `VLLM_EXL3_TRELLIS_MIN_M` unset by
 default. Fix commits: vLLM PR #139 `239ba678b5` + `796ea923f1`.
+
+
+## v30 (2026-07-27): env-knob registration + sparkinfer PR#79 module
+
+Delta vs v29 (which carries all correctness fixes): (1) the nine EXL3 env knobs are registered
+in vllm envs.py -- startup 'Unknown vLLM environment variable' warnings drop 15 -> 8 (the
+remaining 8 are base-runtime-owned), and the knobs join the torch.compile cache-key factors
+(one-time ~70 s recompile after changing one); (2) the SparkInfer wheel is rebuilt from the
+PR#49 branch rebased onto master AFTER PR#79 ("perf(pcie): add exact DCP top-k owner exchange"),
+so the CUDA-IPC owner-exchange module ships in the image. It is DORMANT here: PR#79 has zero
+overlap with the EXL3/MoE lane (only +1 line outside its new files), and the vLLM-side owner
+algorithm is not yet in this image's pinned base. Gates on the pinned v30: boot with
+VLLM_EXL3_TRELLIS_MIN_M unset PASS, 0 capture-window errors, warnings 15->8 confirmed,
+greedy inference PASS, tool-calls 4/4.

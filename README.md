@@ -55,7 +55,7 @@ of the MTP draft died with *"eager parity path entered during CUDA graph capture
 ## What's validated
 
 Full methodology and raw numbers: [`docs/RELEASE_TEST_SUITE.md`](docs/RELEASE_TEST_SUITE.md).
-Headlines, all measured on this exact image/digest on 4× RTX PRO 6000 (power-capped 300 W):
+Headlines, measured on this image lineage on 4× RTX PRO 6000 (power-capped 300 W) — the correctness results were taken on v29; v30's only delta is env-knob registration plus a dormant PR#79 module (boot/tool gates re-run on the v30 digest):
 
 | Check | Result |
 |---|---|
