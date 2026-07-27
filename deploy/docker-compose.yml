@@ -1,0 +1,165 @@
+services:
+  glm52:
+    image: ${IMAGE:-verdictai/glm52-exl3-sparkinfer:v29-gg-v20-mincapturable-vllm0c79e41-sie603f74-cu132-sm120a@sha256:2996b8ac37ff126a8aeebaa24df72e2154a2a1573df41f99eb48a4275e33eb41}
+    container_name: glm52-exl3-sparkinfer
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8000}:8000"
+    gpus: all
+    shm_size: "32g"
+    ipc: host
+    ulimits:
+      memlock: -1
+      nofile: 1048576
+    environment:
+      CUDA_VISIBLE_DEVICES: "${CUDA_VISIBLE_DEVICES:-3,1,2,0}"
+      CUDA_DEVICE_ORDER: PCI_BUS_ID
+      CUDA_DEVICE_MAX_CONNECTIONS: "32"
+      CUTE_DSL_ARCH: sm_120a
+      TORCH_CUDA_ARCH_LIST: 12.0a
+      FLASHINFER_CUDA_ARCH_LIST: 12.0f
+      FLASHINFER_DISABLE_VERSION_CHECK: "1"
+      OMP_NUM_THREADS: "16"
+      PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True
+      SAFETENSORS_FAST_GPU: "1"
+      NCCL_IB_DISABLE: "1"
+      NCCL_P2P_LEVEL: SYS
+      NCCL_PROTO: LL,LL128,Simple
+      VLLM_USE_FLASHINFER_SAMPLER: "1"
+      VLLM_USE_B12X_FP8_GEMM: "1"
+      VLLM_USE_B12X_SPARSE_INDEXER: "1"
+      VLLM_USE_B12X_MOE: "1"
+      VLLM_USE_V2_MODEL_RUNNER: "1"
+      VLLM_ENABLE_PCIE_ALLREDUCE: "1"
+      VLLM_PCIE_ALLREDUCE_BACKEND: b12x
+      VLLM_PCIE_ONESHOT_ALLREDUCE_MAX_SIZE: "${VLLM_PCIE_ONESHOT_ALLREDUCE_MAX_SIZE:-64KB}"
+      VLLM_PCIE_ONESHOT_FUSED_ADD_RMS_NORM_MAX_SIZE: "${VLLM_PCIE_ONESHOT_FUSED_ADD_RMS_NORM_MAX_SIZE:-84KB}"
+      VLLM_PCIE_DMA_FP8: ag
+      B12X_PCIE_DMA_FP8: ag
+      VLLM_CPP_AR_1STAGE_NCCL_CUTOFF: 56KB
+      VLLM_CPP_AR_IGNORE_CUTOFF_MAX_ROWS: "0"
+      VLLM_RTX6K_FUSED_ALLREDUCE_ADD: "0"
+      VLLM_RTX6K_FUSED_ALLREDUCE_ADD_END_BARRIER: "0"
+      VLLM_USE_AOT_COMPILE: "1"
+      VLLM_USE_BREAKABLE_CUDAGRAPH: "0"
+      VLLM_USE_FUSED_MOE_GROUPED_TOPK: "1"
+      VLLM_USE_B12X_MHC: "1"
+      B12X_MHC_MAX_TOKENS: "16384"
+      VLLM_USE_B12X_WO_PROJECTION: "1"
+      B12X_MLA_SM120_UNIFIED: "1"
+      B12X_DENSE_SPLITK_TURBO: "1"
+      B12X_W4A16_TC_DECODE: "1"
+      B12X_MOE_FORCE_A16: "1"
+      VLLM_DISABLE_SHARED_EXPERTS_STREAM: "${VLLM_DISABLE_SHARED_EXPERTS_STREAM:-1}"
+      VLLM_DISABLED_KERNELS: MarlinFP8ScaledMMLinearKernel
+      VLLM_B12X_MLA_SPEC_EXTEND_AS_DECODE: "${VLLM_B12X_MLA_SPEC_EXTEND_AS_DECODE:-0}"
+      VLLM_B12X_MLA_SPEC_DECODE_MAX_Q: "8"
+      VLLM_USE_B12X_DCP_A2A: "1"
+      VLLM_DCP_A2A_MAX_TOKENS: "16"
+      VLLM_DCP_A2A_LARGE_BACKEND: ag_rs
+      VLLM_DCP_GLOBAL_TOPK: "${VLLM_DCP_GLOBAL_TOPK:-1}"
+      VLLM_DCP_SHARD_DRAFT: "${VLLM_DCP_SHARD_DRAFT:-1}"
+      # --- Gilded Gnosis v20 FINAL DCP prefill auto-policy (TP4/DCP4) ----------
+      # These are exactly what the v20 base image's own launcher resolves from
+      # DCP_*=auto for TP=4/DCP=4 (verify with:
+      #   docker run -e TP=4 -e DCP=4 -e DRY_RUN=1 \
+      #     --entrypoint /usr/local/bin/serve-glm52-v19.sh <base-image>)
+      # They are set explicitly because this preset calls `vllm serve` directly
+      # for the EXL3 flags and so bypasses /usr/local/bin/serve-gilded-gnosis.sh,
+      # which is what normally translates DCP_* -> VLLM_*.
+      VLLM_DCP_QUERY_SPLIT: "${VLLM_DCP_QUERY_SPLIT:-1}"
+      VLLM_B12X_MLA_CKV_GATHER: "${VLLM_B12X_MLA_CKV_GATHER:-1}"
+      VLLM_DCP_TOPK_OWNER_MERGE: "${VLLM_DCP_TOPK_OWNER_MERGE:-1}"
+      VLLM_DCP_INDEXER_SHARDS: "${VLLM_DCP_INDEXER_SHARDS:-0}"
+      VLLM_B12X_MLA_CKV_PREFETCH_DEPTH: "${VLLM_B12X_MLA_CKV_PREFETCH_DEPTH:-1}"
+      VLLM_B12X_MLA_CKV_PREFETCH_WORKSPACE_MIB: "${VLLM_B12X_MLA_CKV_PREFETCH_WORKSPACE_MIB:-1024}"
+      # DCP_PREFILL_WORKSPACE=auto -> 1 for TP4/DCP4: the corrected workspace
+      # accounting that resolves the >8k DCP prefill collapse.
+      VLLM_DCP_PROJECT_BEFORE_MERGE: "${VLLM_DCP_PROJECT_BEFORE_MERGE:-1}"
+      VLLM_DCP_PROJECT_BEFORE_MERGE_MIN_PREFILL_TOKENS: "${VLLM_DCP_PROJECT_BEFORE_MERGE_MIN_PREFILL_TOKENS:-1024}"
+      VLLM_B12X_MLA_DCP_GATHER_IN_WORKSPACE: "${VLLM_B12X_MLA_DCP_GATHER_IN_WORKSPACE:-1}"
+      VLLM_B12X_MLA_CKV_GATHER_MIN_TOKENS: "${VLLM_B12X_MLA_CKV_GATHER_MIN_TOKENS:-512}"
+      VLLM_B12X_MLA_CKV_GATHER_MAX_TOKENS: "${VLLM_B12X_MLA_CKV_GATHER_MAX_TOKENS:-16384}"
+      ENABLE_MTP: "${ENABLE_MTP:-1}"
+      MTP_TOKENS: "${MTP_TOKENS:-3}"
+      MTP_DRAFT_SAMPLE_METHOD: "${MTP_DRAFT_SAMPLE_METHOD:-greedy}"
+      ENABLE_ASYNC_SCHEDULING: "${ENABLE_ASYNC_SCHEDULING:-0}"
+      GLM52_INDEX_TOPK_PATTERN: "${GLM52_INDEX_TOPK_PATTERN:-FFFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSS}"
+      # Empty = auto-profile max KV at GPU_MEMORY_UTILIZATION (~1.13M tokens with
+      # the tr3 MTP head on 4x RTX PRO 6000 @ 0.96). Set an integer to pin.
+      NUM_GPU_BLOCKS_OVERRIDE: "${NUM_GPU_BLOCKS_OVERRIDE:-}"
+      MAX_NUM_BATCHED_TOKENS: "${MAX_NUM_BATCHED_TOKENS:-3072}"
+      # REQUIRED for the tr3 MTP layer-78: MTP-N draft small-m (m=1..N) GEMMs must
+      # stay inside the Trellis cudagraph window (default 4 -> capture error m=3).
+      VLLM_EXL3_TRELLIS_MIN_M: "${VLLM_EXL3_TRELLIS_MIN_M:-}"   # unset = backend decides (v29): draft layers auto-widen to MIN_CAPTURABLE_TRELLIS_M=1, targets keep 4
+      VLLM_EXL3_TRELLIS_MAX_M: "32"
+      VLLM_EXL3_TRELLIS_BLOCK_M: "8"
+      VLLM_EXL3_PREFILL_CHUNK: "128"
+      VLLM_CACHE_DIR: /cache/jit/vllm
+      TRITON_CACHE_DIR: /cache/jit/triton
+      TORCH_EXTENSIONS_DIR: /cache/jit/torch_extensions
+      TORCHINDUCTOR_CACHE_DIR: /cache/jit/torchinductor
+      FLASHINFER_WORKSPACE_BASE: /cache/jit/flashinfer
+      XDG_CACHE_HOME: /cache/jit
+      TVM_FFI_CACHE_DIR: /cache/jit/tvm-ffi
+      VLLM_MEMORY_PROFILE_INCLUDE_ATTN: "1"
+      VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS: "1"
+      VLLM_DEBUG_WORKSPACE: "${VLLM_DEBUG_WORKSPACE:-0}"
+    volumes:
+      - ${MODEL_DIR:-/home/brandonmusic/models/GLM-5.2-EXL3-TR3-3.0bpw}:/model:ro
+      - ${CACHE_DIR:-/home/brandonmusic/.cache/glm52-tr3-release}:/cache:rw
+    entrypoint:
+      - /bin/bash
+      - -lc
+    command:
+      - |
+        unset NCCL_GRAPH_FILE NCCL_GRAPH_DUMP_FILE VLLM_B12X_MLA_EXTEND_MAX_CHUNKS
+        spec_args=()
+        if [[ "$${ENABLE_MTP:-1}" == "1" ]]; then
+          printf -v spec_config '{"method":"mtp","num_speculative_tokens":%s,"moe_backend":"triton","draft_sample_method":"%s"}' \
+            "$${MTP_TOKENS:-3}" "$${MTP_DRAFT_SAMPLE_METHOD:-greedy}"
+          spec_args=(--speculative-config "$$spec_config")
+        fi
+        if [[ "$${ENABLE_ASYNC_SCHEDULING:-0}" == "1" ]]; then
+          async_args=(--async-scheduling)
+        else
+          async_args=(--no-async-scheduling)
+        fi
+        index_pattern="$${GLM52_INDEX_TOPK_PATTERN}"
+        if [[ "$${#index_pattern}" -ne 78 ]]; then
+          printf 'GLM-5.2 index_topk_pattern must cover all 78 layers (got %s)\n' "$${#index_pattern}" >&2
+          exit 2
+        fi
+        printf -v hf_overrides '{"use_index_cache":true,"index_topk_pattern":"%s"}' "$${index_pattern}"
+        block_args=()
+        if [[ -n "$${NUM_GPU_BLOCKS_OVERRIDE:-}" ]]; then
+          block_args=(--num-gpu-blocks-override "$${NUM_GPU_BLOCKS_OVERRIDE}")
+        fi
+        exec vllm serve /model \
+          --served-model-name GLM-5.2-EXL3-TR3-3.0bpw \
+          --host 0.0.0.0 --port 8000 --trust-remote-code \
+          --tensor-parallel-size 4 \
+          --decode-context-parallel-size 4 \
+          --dcp-comm-backend a2a \
+          --dcp-kv-cache-interleave-size ${DCP_KV_CACHE_INTERLEAVE_SIZE:-64} \
+          --seed 0 \
+          --quantization exl3 \
+          --kv-cache-dtype nvfp4_ds_mla \
+          --attention-backend B12X_MLA_SPARSE \
+          --moe-backend b12x \
+          --load-format safetensors \
+          --compilation-config '{"cudagraph_mode":"FULL_AND_PIECEWISE","cudagraph_capture_sizes":[4,8,12,16,20,24,28,32],"custom_ops":["all"],"pass_config":{"fuse_allreduce_rms":true}}' \
+          --gpu-memory-utilization ${GPU_MEMORY_UTILIZATION:-0.96} \
+          --max-model-len ${MAX_MODEL_LEN:-524288} \
+          --max-num-seqs 8 \
+          --max-num-batched-tokens $${MAX_NUM_BATCHED_TOKENS:-3072} \
+          --max-cudagraph-capture-size 32 \
+          --enable-chunked-prefill \
+          --enable-prefix-caching \
+          --enable-auto-tool-choice \
+          --tool-call-parser glm47 \
+          --reasoning-parser glm45 \
+          --default-chat-template-kwargs '{"reasoning_effort":"high"}' \
+          --hf-overrides "$${hf_overrides}" \
+          "$${block_args[@]}" \
+          "$${async_args[@]}" \
+          "$${spec_args[@]}"

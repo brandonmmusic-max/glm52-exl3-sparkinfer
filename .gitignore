@@ -1,0 +1,5 @@
+# prebuilt binaries are recovered from the digest-pinned image (build/extract_assets.sh)
+build/*.so
+build/dist/
+__pycache__/
+*.pyc
